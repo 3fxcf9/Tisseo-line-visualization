@@ -2,8 +2,14 @@
 
 ## How to use
 
-1. Create a `key.js` file with the following content:
-    ```js
-    const apikey = "INSERT-YOUR-TISSEO-API-KEY-HERE";
-    ```
-2. Open the `index.html` file and enter a Tisseo line short name (`L8`, `B`, `TELEO` or `27`)
+In order to use this website, you have to get an api key from `opendata@tisseo.fr`
+
+If you dont want the page to ask your key, you can create a `key.js` file with the following content:
+
+```js
+const apikey = "INSERT-YOUR-TISSEO-API-KEY-HERE";
+```
+
+## License
+
+This code is under the [GPL-3.0 license](https://www.gnu.org/licenses/gpl-3.0.en.html).
