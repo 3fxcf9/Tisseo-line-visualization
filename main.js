@@ -2,8 +2,9 @@
 // You have to create a file named key.js and containing the following code
 // > const apikey = "INSERT-YOUR-TISSEO-API-KEY-HERE";
 
-const line_url = `https://api.tisseo.fr/v2/lines.json?shortName={NAME}&displayGeometry=1&key=${apikey}`;
-const stops_url = `https://api.tisseo.fr/v2/stop_areas.json?lineId={ID}&displayCoordXY=1&key=${apikey}`;
+const key = typeof apikey == "string" ? apikey : prompt("Enter your tisseo api key");
+const line_url = `https://api.tisseo.fr/v2/lines.json?shortName={NAME}&displayGeometry=1&key=${key}`;
+const stops_url = `https://api.tisseo.fr/v2/stop_areas.json?lineId={ID}&displayCoordXY=1&key=${key}`;
 // Config end
 
 const line_input = document.querySelector("input[name=line]");
