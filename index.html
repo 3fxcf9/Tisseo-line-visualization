@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				border: none;
+				outline: none;
+				box-sizing: border-box;
+			}
+			body {
+				background-color: #121212;
+				display: flex;
+				overflow: hidden;
+			}
+
+			aside {
+				padding: 3rem;
+			}
+
+			input {
+				background-color: transparent;
+				color: white;
+				padding: 1rem;
+				border: 2px solid rgba(255, 255, 255, 0.3);
+				border-radius: 0.5rem;
+			}
+			input[type="submit"] {
+				cursor: pointer;
+				background-color: rgb(38, 38, 59);
+				border-color: rgb(38, 38, 59);
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="canvas" width="200" height="100" style="border: 1px solid #000000"> Your browser does not support the HTML canvas tag. </canvas>
+		<aside class="config">
+			<input type="text" name="line" placeholder="Ligne" />
+			<input type="submit" value="Valider" />
+		</aside>
+
+		<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+		<script src="key.js"></script>
+		<script src="main.js"></script>
+	</body>
+</html>
