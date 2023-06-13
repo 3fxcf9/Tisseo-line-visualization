@@ -22,14 +22,26 @@ submit_btn.addEventListener("click", (e) => {
 		.get(line_url.replace("{NAME}", line_input.value))
 		.then((response) => {
 			const line = response.data.lines.line[0];
+			const coordinates = line.geometry[0].wkt.match(/-?\d+\.\d+\s-?\d+\.\d+/g).map((coord) => coord.split(" ").map(parseFloat));
+
+			minLon = Math.min(...coordinates.map((coord) => coord[0]));
+			maxLon = Math.max(...coordinates.map((coord) => coord[0]));
+			minLat = Math.min(...coordinates.map((coord) => coord[1]));
+			maxLat = Math.max(...coordinates.map((coord) => coord[1]));
+
+			pixelCoordinates = coordinates.map((coord) => convertCoordinatesToPixels(coord));
+
 			clear();
-			plotLine(line.geometry[0].wkt, line.bgXmlColor);
+			plotLine(pixelCoordinates, line.bgXmlColor);
+
+			const knn = new knn_points(pixelCoordinates);
 
 			axios.get(stops_url.replace("{ID}", line.id)).then((response) => {
 				const stops = response.data.stopAreas.stopArea;
-				console.log(stops);
 				stops.forEach((stop) => {
-					drawPoint(stop.x, stop.y, stop.name, line.bgXmlColor);
+					const closest = knn.closest(convertCoordinatesToPixels([stop.x, stop.y]));
+					console.log(closest);
+					drawPoint(closest.x, closest.y, stop.name, line.bgXmlColor);
 				});
 			});
 		})
@@ -60,34 +72,25 @@ function convertCoordinatesToPixels(coords) {
 
 function drawPoint(x, y, name, color) {
 	// Point
-	const pixelCoords = convertCoordinatesToPixels([x, y]);
 	ctx.beginPath();
-	ctx.arc(...pixelCoords, 5, 0, 2 * Math.PI, false);
+	ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
 	ctx.fillStyle = color;
 	ctx.fill();
 
 	// Text
 	ctx.fillStyle = "rgba(255,255,255,0.5)";
 	ctx.textBaseline = "middle";
-	ctx.fillText(name, pixelCoords[0] + 10, pixelCoords[1]);
+	ctx.fillText(name, x + 10, y);
 }
 
-function plotLine(wkt, color) {
-	const coordinates = wkt.match(/-?\d+\.\d+\s-?\d+\.\d+/g).map((coord) => coord.split(" ").map(parseFloat));
-
-	minLon = Math.min(...coordinates.map((coord) => coord[0]));
-	maxLon = Math.max(...coordinates.map((coord) => coord[0]));
-	minLat = Math.min(...coordinates.map((coord) => coord[1]));
-	maxLat = Math.max(...coordinates.map((coord) => coord[1]));
-
+function plotLine(coordinates, color) {
 	// Start drawing the path
 	ctx.beginPath();
-	ctx.moveTo(...convertCoordinatesToPixels(coordinates[0]));
+	ctx.moveTo(...coordinates[0]);
 
 	// Draw line segments
 	for (let i = 1; i < coordinates.length; i++) {
-		const pixelCoords = convertCoordinatesToPixels(coordinates[i]);
-		ctx.lineTo(...pixelCoords);
+		ctx.lineTo(...coordinates[i]);
 	}
 
 	ctx.lineWidth = 2;
@@ -103,3 +106,34 @@ const side = Math.min(
 );
 canvas.height = side;
 canvas.width = side;
+
+class knn_points {
+	/**
+	 * Knn points constructor
+	 * @param {[number, number][]} points
+	 */
+	constructor(points) {
+		self.points = points;
+	}
+
+	/**
+	 * Closest point to stop
+	 * @param {{x:number, y:number}} stop
+	 * @returns {{x:number, y:number}}
+	 */
+	closest(stop) {
+		let min_dist = Infinity;
+		let best_point = stop;
+
+		self.points.forEach((point) => {
+			const distance = Math.sqrt(Math.pow(point[0] - stop[0], 2) + Math.pow(point[1] - stop[1], 2));
+
+			if (distance < min_dist) {
+				min_dist = distance;
+				best_point = point;
+			}
+		});
+
+		return { x: best_point[0], y: best_point[1] };
+	}
+}
