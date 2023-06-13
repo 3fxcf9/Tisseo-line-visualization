@@ -22,25 +22,42 @@ submit_btn.addEventListener("click", (e) => {
 		.get(line_url.replace("{NAME}", line_input.value))
 		.then((response) => {
 			const line = response.data.lines.line[0];
-			const coordinates = line.geometry[0].wkt.match(/-?\d+\.\d+\s-?\d+\.\d+/g).map((coord) => coord.split(" ").map(parseFloat));
+			const geodata = parse(line.geometry[0].wkt);
 
-			minLon = Math.min(...coordinates.map((coord) => coord[0]));
-			maxLon = Math.max(...coordinates.map((coord) => coord[0]));
-			minLat = Math.min(...coordinates.map((coord) => coord[1]));
-			maxLat = Math.max(...coordinates.map((coord) => coord[1]));
+			minLon = Infinity;
+			maxLon = 0;
+			minLat = Infinity;
+			maxLat = 0;
 
-			pixelCoordinates = coordinates.map((coord) => convertCoordinatesToPixels(coord));
+			geodata.geometries.forEach((geometry) => {
+				const coordinates = geometry.coordinates;
+
+				// Update box
+				minLon = Math.min(minLon, ...coordinates.map((coord) => coord[0]));
+				maxLon = Math.max(maxLon, ...coordinates.map((coord) => coord[0]));
+				minLat = Math.min(minLat, ...coordinates.map((coord) => coord[1]));
+				maxLat = Math.max(maxLat, ...coordinates.map((coord) => coord[1]));
+			});
 
 			clear();
-			plotLine(pixelCoordinates, line.bgXmlColor);
+			console.log("Number of geometries: ", geodata.geometries.length);
+			const allPoints = [];
+			geodata.geometries.forEach((geometry) => {
+				const coordinates = geometry.coordinates;
+				console.log(minLon, maxLon, minLat, maxLat);
 
-			const knn = new knn_points(pixelCoordinates);
+				const pixelCoordinates = coordinates.map((coord) => convertCoordinatesToPixels(coord));
+				allPoints.push.apply(allPoints, pixelCoordinates);
+
+				plotLine(pixelCoordinates, line.bgXmlColor);
+			});
+
+			const knn = new knn_points(allPoints);
 
 			axios.get(stops_url.replace("{ID}", line.id)).then((response) => {
 				const stops = response.data.stopAreas.stopArea;
 				stops.forEach((stop) => {
 					const closest = knn.closest(convertCoordinatesToPixels([stop.x, stop.y]));
-					console.log(closest);
 					drawPoint(closest.x, closest.y, stop.name, line.bgXmlColor);
 				});
 			});
@@ -55,9 +72,9 @@ function clear() {
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-let minLon = 0;
+let minLon = Infinity;
 let maxLon = 0;
-let minLat = 0;
+let minLat = Infinity;
 let maxLat = 0;
 
 function convertCoordinatesToPixels(coords) {
