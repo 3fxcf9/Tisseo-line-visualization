@@ -83,6 +83,10 @@ class knn_points {
 
 const coordsConverter = new CoordsConverter();
 
+line_input.addEventListener("keypress", (e) => {
+	if (e.key == "Enter") submit_btn.click();
+});
+
 submit_btn.addEventListener("click", (e) => {
 	axios
 		.get(line_url.replace("{NAME}", line_input.value))
